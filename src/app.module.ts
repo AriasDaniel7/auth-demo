@@ -14,6 +14,7 @@ import environment from './config/environments/environment';
       username: environment().database.username,
       password: environment().database.password,
       database: environment().database.database,
+      ssl: true,
       autoLoadEntities: true,
       synchronize: true,
     }),
