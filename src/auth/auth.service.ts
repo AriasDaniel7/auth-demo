@@ -17,7 +17,6 @@ import { Cache } from 'cache-manager';
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -32,12 +31,14 @@ export class AuthService {
       await this.userRepository.save(user);
       delete user.password;
 
-      await this.cacheManager.set(`user_${user.id}`, user);
-
       return user;
     } catch (error) {
       this.handleDBError(error);
     }
+  }
+
+  async findAll() {
+    return await this.userRepository.find();
   }
 
   private handleDBError(error: any) {
