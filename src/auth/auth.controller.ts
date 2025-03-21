@@ -1,9 +1,18 @@
 import { Controller, Post, Body, Get, UseInterceptors } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
+
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
-import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
+import { LoginUserDto } from './dto/login-user.dto';
+import { Auth } from './decorators/auth.decorator';
+import { GetUser } from './decorators/get-user.decorator';
 
 @Controller('auth')
 @UseInterceptors(CacheInterceptor)
@@ -35,5 +44,31 @@ export class AuthController {
   @CacheTTL(3600)
   findAll() {
     return this.authService.findAll();
+  }
+
+  @ApiOperation({ summary: 'Login' })
+  @ApiResponse({
+    status: 200,
+    description: 'The user has been successfully logged in.',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiBody({ type: LoginUserDto })
+  @Post('login')
+  login(@Body() loginUserDto: LoginUserDto) {
+    return this.authService.login(loginUserDto);
+  }
+
+  @ApiOperation({ summary: 'Check the authentication status' })
+  @ApiResponse({
+    status: 200,
+    description: 'You are authenticated',
+  })
+  @ApiBearerAuth('access-token')
+  @Get('check')
+  @Auth()
+  @CacheKey('checkAuthStatus')
+  @CacheTTL(3600)
+  checkAuthStatus(@GetUser() user: User) {
+    return this.authService.checkUser(user);
   }
 }

@@ -18,8 +18,14 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Auth API REST')
-    .setDescription('API description')
+    .setDescription(
+      'This is an authentication API built with NestJS. It includes user registration, login, and role-based access control. The API uses JWT for authentication and TypeORM for database interactions. The project also includes a seed module to populate the database with initial data.',
+    )
     .setVersion('1.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'access-token',
+    )
     .build();
 
   const documentFactory = SwaggerModule.createDocument(app, config);

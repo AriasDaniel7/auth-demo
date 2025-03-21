@@ -1,19 +1,25 @@
+import { LoginUserDto } from './dto/login-user.dto';
 import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
+import { JwtPayload } from './interfaces/jwt-payload';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -34,8 +40,51 @@ export class AuthService {
     }
   }
 
+  async login(loginUserDto: LoginUserDto) {
+    const { email, password } = loginUserDto;
+
+    const user = await this.userRepository.findOne({
+      where: { email },
+      select: { email: true, password: true, id: true, isActive: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'Invalid are not valid (email) credentials',
+      );
+    }
+
+    if (!bcrypt.compareSync(password, user.password!)) {
+      throw new UnauthorizedException(
+        'Invalid are not valid (password) credentials',
+      );
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('User is not active');
+    }
+
+    delete user.password;
+
+    const token = this.getJwtToken({ id: user.id });
+
+    return {
+      id: user.id,
+      ...token,
+    };
+  }
+
   async findAll() {
     return await this.userRepository.find();
+  }
+
+  async checkUser(user: User) {
+    const { id } = user;
+    const token = this.getJwtToken({ id });
+    return {
+      id,
+      ...token,
+    };
   }
 
   private handleDBError(error: any) {
@@ -53,5 +102,17 @@ export class AuthService {
     throw new InternalServerErrorException(
       'Please check logs for more details',
     );
+  }
+
+  private getJwtToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    const decode = this.jwtService.decode(token);
+    delete decode.id;
+
+    return {
+      token,
+      iat: decode.iat,
+      exp: decode.exp,
+    };
   }
 }
