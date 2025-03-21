@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseInterceptors,
+  Param,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -70,5 +78,21 @@ export class AuthController {
   @CacheTTL(3600)
   checkAuthStatus(@GetUser() user: User) {
     return this.authService.checkUser(user);
+  }
+
+  @ApiOperation({ summary: 'Find a user by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'The user has been successfully found.',
+    type: User,
+  })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @ApiBearerAuth('access-token')
+  @Get('user/:id')
+  @Auth()
+  @CacheKey('user')
+  @CacheTTL(3600)
+  findOneById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.authService.findOneById(id);
   }
 }

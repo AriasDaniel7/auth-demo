@@ -3,6 +3,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +15,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload';
 import { JwtService } from '@nestjs/jwt';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class AuthService {
@@ -83,6 +85,20 @@ export class AuthService {
     return {
       ...token,
     };
+  }
+
+  async findOneById(id: string) {
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid id');
+    }
+
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new NotFoundException(`User with id '${id}' not found`);
+    }
+
+    return user;
   }
 
   private handleDBError(error: any) {
