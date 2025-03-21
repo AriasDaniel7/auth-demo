@@ -69,7 +69,6 @@ export class AuthService {
     const token = this.getJwtToken({ id: user.id });
 
     return {
-      id: user.id,
       ...token,
     };
   }
@@ -82,7 +81,6 @@ export class AuthService {
     const { id } = user;
     const token = this.getJwtToken({ id });
     return {
-      id,
       ...token,
     };
   }
