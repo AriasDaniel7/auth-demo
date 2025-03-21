@@ -87,17 +87,7 @@ export class AuthService {
     };
   }
 
-  async findOneById(id: string) {
-    if (!isUUID(id)) {
-      throw new BadRequestException('Invalid id');
-    }
-
-    const user = await this.userRepository.findOneBy({ id });
-
-    if (!user) {
-      throw new NotFoundException(`User with id '${id}' not found`);
-    }
-
+  async findOneById(user: User) {
     return user;
   }
 

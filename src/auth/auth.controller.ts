@@ -88,11 +88,11 @@ export class AuthController {
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
   @ApiBearerAuth('access-token')
-  @Get('user/:id')
+  @Get('user')
   @Auth()
   @CacheKey('user')
   @CacheTTL(3600)
-  findOneById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.authService.findOneById(id);
+  findOneById(@GetUser() user: User) {
+    return this.authService.findOneById(user);
   }
 }
